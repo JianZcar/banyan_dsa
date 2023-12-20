@@ -49,4 +49,3 @@ class AuctionServer:
 
 if __name__ == "__main__":
     server = AuctionServer()
-    server.accept_clients()

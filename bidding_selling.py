@@ -6,7 +6,6 @@ import socket
 import threading
 
 
-
 class BiddingSellingScreen(ctk.CTkFrame):
     def __init__(self, master=None, username=None):
         super().__init__(master, fg_color="transparent")
@@ -64,7 +63,7 @@ class BiddingSellingScreen(ctk.CTkFrame):
                 if message.startswith('new_item:'):
                     item = message.split(':', 1)[1]
                     pub.sendMessage('new_item', message=f'new_item:{item}')
-            except:
+            except socket.error:
                 self.server.close()
                 break
 
@@ -125,9 +124,9 @@ class BiddingSellingScreen(ctk.CTkFrame):
     def update_bid_lb(self, message):
         print(f"Updating bid listbox with message: {message}")
         if message.startswith('new_item:'):
-            print("hey i work")
             item = message.split(':', 1)[1]
-            self.bid_lb.insert('end', item)
+            if not (f"{self.username}" in item):
+                self.bid_lb.insert('end', item)
 
     def deselect(self, selected_option):
         print(selected_option)
