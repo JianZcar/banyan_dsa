@@ -5,7 +5,7 @@ class User:
         self._items = []
 
     def __repr__(self):
-        return f"User: {self.username}"
+        return f"{self.username}"
 
     @property
     def username(self):
