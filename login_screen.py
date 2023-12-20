@@ -46,7 +46,7 @@ class LoginScreen(ctk.CTkFrame):
         print(user_)
         if user_ and user_.username == username and user_.password == password:
             self.destroy()
-            screen = self.screen(self.master)
+            screen = self.screen(self.master, user_)
             screen.pack()
 
         # Here you would add your login logic

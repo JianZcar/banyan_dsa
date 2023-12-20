@@ -1,11 +1,13 @@
 import customtkinter as ctk
 from CTkListbox import *
 import login_screen
+from pub_sub import Publisher, Subscriber
 
 
 class BiddingSellingScreen(ctk.CTkFrame):
-    def __init__(self, master=None):
+    def __init__(self, master=None, username=None):
         super().__init__(master, fg_color="transparent")
+        self.username = username
         self.master = master
         self.pack()
         self.recently_selected = None
@@ -18,6 +20,13 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.frame2 = ctk.CTkFrame(self, fg_color="transparent")
         self.frame2.grid(row=1, column=0, padx=10, pady=10)
 
+        # pub_sub
+        self.publisher = Publisher()
+        self.subscriber = Subscriber(self.handle_message)
+
+        self.item_name_entry = None
+        self.item_price_entry = None
+
         # Sell button
         self.sell_button = ctk.CTkButton(self.frame1, text="Sell", command=self.sell)
         self.sell_button.grid(row=2, column=1, padx=10, pady=10)
@@ -29,16 +38,6 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.bid_lb = CTkListbox(self.frame1, command=self.bid)
         self.bid_lb.grid(row=1, column=0, padx=10, pady=10)
 
-        self.bid_lb.insert(0, "Option 0")
-        self.bid_lb.insert(1, "Option 1")
-        self.bid_lb.insert(2, "Option 2")
-        self.bid_lb.insert(3, "Option 3")
-        self.bid_lb.insert(4, "Option 4")
-        self.bid_lb.insert(5, "Option 5")
-        self.bid_lb.insert(6, "Option 6")
-        self.bid_lb.insert(7, "Option 7")
-        self.bid_lb.insert("END", "Option 8")
-
         # Items you are selling listbox
         self.selling_label = ctk.CTkLabel(self.frame1, text="Items you are selling")
         self.selling_label.grid(row=0, column=1, padx=0, pady=0)
@@ -46,26 +45,19 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.selling_lb = CTkListbox(self.frame1, command=self.deselect)
         self.selling_lb.grid(row=1, column=1, padx=10, pady=10)
 
-        self.selling_lb.insert(0, "Option 0")
-        self.selling_lb.insert(1, "Option 1")
-        self.selling_lb.insert(2, "Option 2")
-        self.selling_lb.insert(3, "Option 3")
-        self.selling_lb.insert(4, "Option 4")
-        self.selling_lb.insert(5, "Option 5")
-        self.selling_lb.insert(6, "Option 6")
-        self.selling_lb.insert(7, "Option 7")
-        self.selling_lb.insert("END", "Option 8")
-
         # Logout button
         self.logout_button = ctk.CTkButton(self.frame1, text="Logout", command=self.logout)
         self.logout_button.grid(row=0, column=3, padx=10, pady=10)
+
+    def handle_message(self, message):
+        print(f"Received message: {message}")
 
     def logout(self):
         self.destroy()
         self.master.login_screen = login_screen.LoginScreen(self.master, BiddingSellingScreen)
         self.master.login_screen.pack()
 
-    def frame2_setup(self, enable_name_entry: bool, name_label_text: str, price_label_text: str):
+    def frame2_setup(self, enable_name_entry: bool, name_label_text: str, price_label_text: str, command=None):
         self.back()
         self.frame2 = ctk.CTkFrame(self)
         self.frame2.grid(row=2, column=0, padx=10)
@@ -76,15 +68,15 @@ class BiddingSellingScreen(ctk.CTkFrame):
         item_name_label = ctk.CTkLabel(frame_item, text=name_label_text)
         item_name_label.grid(row=0, column=0, padx=10, pady=10)
         if enable_name_entry:
-            item_name_entry = ctk.CTkEntry(frame_item)
-            item_name_entry.grid(row=0, column=1, padx=10, pady=10)
+            self.item_name_entry = ctk.CTkEntry(frame_item)
+            self.item_name_entry.grid(row=0, column=1, padx=10, pady=10)
 
         item_price_label = ctk.CTkLabel(frame_item, text=price_label_text)
         item_price_label.grid(row=1, column=0, padx=10, pady=10)
-        item_price_entry = ctk.CTkEntry(frame_item)
-        item_price_entry.grid(row=1, column=1, padx=10, pady=10)
+        self.item_price_entry = ctk.CTkEntry(frame_item)
+        self.item_price_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        item_accept_button = ctk.CTkButton(self.frame2, text="Accept", command=self.back, width=30)
+        item_accept_button = ctk.CTkButton(self.frame2, text="Accept", command=command, width=30)
         item_accept_button.pack(padx=10, pady=15)
 
         x = ctk.CTkButton(frame_item, text="X", command=self.back, width=30)
@@ -95,12 +87,22 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.recently_selected = None
 
     def sell(self):
-        self.frame2_setup(True, "Item Name", "Item Price")
+        self.frame2_setup(True, "Item Name", "Item Price",
+                          self.avail_to_bidding)
 
     def bid(self, selected_option):
-        self.frame2_setup(False, selected_option, "Bid Price")
+        self.frame2_setup(False, selected_option, "Bid Price", self.back)
         i = self.bid_lb.curselection()
         self.bid_lb.deactivate(i)
+
+    def avail_to_bidding(self):
+        item_name = self.item_name_entry.get()
+        item_price = self.item_price_entry.get()
+        self.publisher.publish(f"Item for bid: {item_name} at starting price of |{item_price} by |{self.username}")
+        print(f"Published message: Item for bid: {item_name} at starting price of |{item_price} by |{self.username}")
+        self.item_name_entry.delete(0, 'end')
+        self.item_price_entry.delete(0, 'end')
+        self.back()
 
     def deselect(self, selected_option):
         print(selected_option)
