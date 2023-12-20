@@ -1,15 +1,14 @@
 import customtkinter as ctk
-import register_screen
+import login_screen
+import bidding_selling
 
 
-class LoginScreen(ctk.CTkFrame):
-    def __init__(self, master=None, screen=None):
+class RegisterScreen(ctk.CTkFrame):
+    def __init__(self, master=None):
         super().__init__(master, fg_color="transparent")
         self.master = master
         self.pack()
-        self.sign_up_screen = None
-        screen = ctk.CTkFrame(self.master) if screen is None else screen
-        self.screen = screen
+        self.login_screen = None
 
         self.frame = ctk.CTkFrame(self, fg_color="transparent")
         self.frame.pack(padx=10, pady=10)
@@ -30,27 +29,35 @@ class LoginScreen(ctk.CTkFrame):
         self.password_entry = ctk.CTkEntry(self.frame_password, show="*")
         self.password_entry.pack()
 
-        self.login_button = ctk.CTkButton(self.frame, text="Login", command=self.login)
-        self.login_button.pack(padx=10, pady=10)
+        # Password frame 2
+        self.frame_password_1 = ctk.CTkFrame(self.frame, fg_color="transparent")
+        self.frame_password_1.pack(padx=10, pady=10)
+        self.password_label_1 = ctk.CTkLabel(self.frame_password_1, text="Re-enter Password")
+        self.password_label_1.pack()
+        self.password_entry_1 = ctk.CTkEntry(self.frame_password_1, show="*")
+        self.password_entry_1.pack()
 
-        # Sign up
-        self.sign_up_button = ctk.CTkButton(self.frame, text="Go to Register", command=self.sign_up)
-        self.sign_up_button.pack(padx=10, pady=50)
+        self.register_button = ctk.CTkButton(self.frame, text="Register", command=self.register_button)
+        self.register_button.pack(padx=10, pady=10)
 
-    def login(self):
+        self.login_button = ctk.CTkButton(self.frame, text="Go to Login", command=self.login_button)
+        self.login_button.pack(padx=10, pady=50)
+
+    def register_button(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        self.destroy()
-        screen = self.screen(self.master)
-        screen.pack()
+        password_1 = self.password_entry_1.get()
 
         # Here you would add your login logic
-        print(f"Username: {username}, Password: {password}")
+        if password != password_1:
+            print("Passwords do not match")
+        else:
+            print(f"Username: {username}, Password: {password}")
 
-    def sign_up(self):
+    def login_button(self):
         self.destroy()
-        self.sign_up_screen = register_screen.RegisterScreen(self.master)
-        self.sign_up_screen.pack()
+        self.login_screen = login_screen.LoginScreen(self.master, bidding_selling.BiddingSellingScreen)
+        self.login_screen.pack()
 
 
 class App(ctk.CTk):
@@ -63,8 +70,8 @@ class App(ctk.CTk):
         self.geometry(f"{width}x{height}")
         self.ctk_theme = "dark"  # Set the theme to dark mode
 
-        self.login_screen = LoginScreen(self)
-        self.login_screen.pack()
+        self.register_screen = RegisterScreen(self)
+        self.register_screen.pack()
 
 
 if __name__ == "__main__":

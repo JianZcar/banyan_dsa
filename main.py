@@ -1,5 +1,6 @@
-import tkinter as tk
 import customtkinter as ct
+import login_screen
+import bidding_selling
 
 
 class App(ct.CTk):
@@ -12,8 +13,11 @@ class App(ct.CTk):
         self.geometry(f"{width}x{height}")
         self.ctk_theme = "dark"  # Set the theme to dark mode
 
+        # Login screen
+        self.login_screen = login_screen.LoginScreen(self, bidding_selling.BiddingSellingScreen)
+        self.login_screen.pack()
+
 
 if __name__ == "__main__":
     app = App()
     app.mainloop()
-
