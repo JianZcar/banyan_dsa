@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import login_screen
 import bidding_selling
+import user
+import data_save
 
 
 class RegisterScreen(ctk.CTkFrame):
@@ -47,11 +49,15 @@ class RegisterScreen(ctk.CTkFrame):
         username = self.username_entry.get()
         password = self.password_entry.get()
         password_1 = self.password_entry_1.get()
+        users = data_save.load_users()
 
         # Here you would add your login logic
         if password != password_1:
             print("Passwords do not match")
+        elif any(user_.username == username for user_ in users):
+            print("Username already taken")
         else:
+            data_save.save_user(user.User(username, password))
             print(f"Username: {username}, Password: {password}")
 
     def login_button(self):

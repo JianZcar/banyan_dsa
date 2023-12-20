@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import register_screen
+import user
+import data_save
 
 
 class LoginScreen(ctk.CTkFrame):
@@ -40,9 +42,12 @@ class LoginScreen(ctk.CTkFrame):
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        self.destroy()
-        screen = self.screen(self.master)
-        screen.pack()
+        user_ = data_save.get_user(username)  # Retrieve the User object from the database
+        print(user_)
+        if user_ and user_.username == username and user_.password == password:
+            self.destroy()
+            screen = self.screen(self.master)
+            screen.pack()
 
         # Here you would add your login logic
         print(f"Username: {username}, Password: {password}")
@@ -62,7 +67,6 @@ class App(ctk.CTk):
         self.title("Client")
         self.geometry(f"{width}x{height}")
         self.ctk_theme = "dark"  # Set the theme to dark mode
-
         self.login_screen = LoginScreen(self)
         self.login_screen.pack()
 
