@@ -4,8 +4,8 @@ class User:
         self._password = password
         self._items = []
 
-    def to_dict(self):
-        return {'username': self.username, 'password': self.password}
+    def __repr__(self):
+        return f"User: {self.username}"
 
     @property
     def username(self):
