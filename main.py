@@ -7,7 +7,7 @@ class App(ct.CTk):
     def __init__(self):
         super().__init__()
         width = 780
-        height = 420
+        height = 545
 
         self.title("Client")
         self.geometry(f"{width}x{height}")
