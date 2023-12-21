@@ -7,17 +7,61 @@ import pickle
 
 
 class ServerGUI(ctk.CTk):
-    def __init__(self, server):
+    def __init__(self, server_):
         super().__init__()
-        self.server = server
+        self.server = server_
         self.title("Server")
-        self.geometry("500x500")
+        self.geometry("500x700")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.time_left = 0
+
         self.listbox = CTkListbox(self, width=500, height=500)
         self.listbox.pack()
+
+        self.timer_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.timer_frame.pack()
+
+        # Timer input
+        self.timer_input = ctk.CTkEntry(self.timer_frame)
+        self.timer_input.grid(row=1, column=0, padx=10, pady=10)
+
+        # Timer label
+        self.timer_label = ctk.CTkLabel(self.timer_frame, text="")
+        self.timer_label.grid(row=0, column=1, padx=10, pady=10)
+
+        # Start button
+        self.start_button = ctk.CTkButton(self.timer_frame, text="Start Timer", command=self.start_timer)
+        self.start_button.grid(row=1, column=1, padx=10, pady=10)
+
+        # Reset button
+        self.reset_button = ctk.CTkButton(self.timer_frame, text="Reset Timer", command=self.reset_timer)
+        self.reset_button.grid(row=1, column=2, padx=10, pady=10)
 
     def update_listbox(self, message):
         self.listbox.insert('end', message)
 
+    def start_timer(self):
+        self.time_left = int(self.timer_input.get())
+        self.update_timer()
+
+    def reset_timer(self):
+        self.time_left = 0
+        self.timer_label.configure(text="")  # Set the text to an empty string
+
+    def update_timer(self):
+        if self.time_left > 0:
+            minute, secs = divmod(self.time_left, 60)
+            time_format = f"Time left: {'{:02d}:{:02d}'.format(minute, secs)}"
+            self.timer_label.configure(text=time_format)  # Use 'configure' instead of 'config'
+            self.time_left -= 1
+            self.after(1000, self.update_timer)
+        elif self.time_left == 0 and self.timer_label.cget('text') != "":
+            self.timer_label.configure(text="Countdown finished!")
+
+    def on_closing(self):
+        self.server.stop()
+        self.quit()  # Stop the mainloop
+        self.destroy()  # Destroy the window
 
 class AuctionServer:
     def __init__(self, gui):
@@ -26,18 +70,21 @@ class AuctionServer:
         self.server.listen()  # Start listening for connections
         self.clients = []  # Define the clients attribute here
         self.gui = gui
+        self.running = True
 
         threading.Thread(target=self.accept_clients).start()
 
     def accept_clients(self):
         print("Server is ready to accept clients")  # Add this line
-        while True:
+        while self.running:
             try:
                 client, _ = self.server.accept()
                 self.clients.append(client)
                 threading.Thread(target=self.handle_client, args=(client,)).start()
-            except Exception as e:  # Modify this line
-                print(f"An exception occurred: {e}")  # Add this line
+            except OSError as e:
+                if self.running:
+                    print(f"An exception occurred: {e}")  # Add this line
+                break
 
     def broadcast(self, message, sender):
         print(f"Broadcasting message: {message}")
@@ -77,7 +124,8 @@ class AuctionServer:
                 client.close()
                 break
 
-    def get_users(self):
+    @staticmethod
+    def get_users():
         try:
             with open('user.pickle', 'rb') as f:
                 users = pickle.load(f)
@@ -92,13 +140,17 @@ class AuctionServer:
             pickle.dump(users, f)
 
     def stop(self):
+        self.running = False
         for client in self.clients:
-            client.close()
-        self.server.close()
+            if client.fileno() != -1:  # Check if the client socket is still open
+                client.close()
+        if self.server.fileno() != -1:  # Check if the server socket is still open
+            self.server.close()
         print("Server has stopped")
 
 
 if __name__ == "__main__":
-    app = ServerGUI(None)
-    server = AuctionServer(app)
+    server = AuctionServer(None)
+    app = ServerGUI(server)
+    server.gui = app
     app.mainloop()
