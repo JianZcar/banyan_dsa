@@ -15,6 +15,7 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.master = master
         self.server = settings.ConnectServer()
         threading.Thread(target=self.listen_for_messages).start()  # Start a new thread to listen for messages
+        threading.Thread(target=self.update_time).start()  # Start a new thread to update the time
         self.pack()
         self.recently_selected = None
 
@@ -57,6 +58,10 @@ class BiddingSellingScreen(ctk.CTkFrame):
 
         self.username_label = ctk.CTkLabel(self.frame1, text=f"Logged in as: {self.user}")
         self.username_label.grid(row=2, column=3, padx=10, pady=10)
+
+        # Time left label
+        self.time_left_label = ctk.CTkLabel(self.frame1, text="")
+        self.time_left_label.grid(row=1, column=3, padx=10, pady=10)
 
     def listen_for_messages(self):
         while True:
@@ -136,6 +141,16 @@ class BiddingSellingScreen(ctk.CTkFrame):
         print(selected_option)
         i = self.selling_lb.curselection()
         self.selling_lb.deactivate(i)
+
+    def receive_time(self):
+        time_left = int(self.server.recv(1024).decode())  # Convert time_left to an integer
+        minute, secs = divmod(time_left, 60)
+        self.time_left_label.configure(text=f"Time left: {'{:02d}:{:02d}'.format(minute, secs)}")
+        return time_left
+
+    def update_time(self):
+        while True:
+            self.receive_time()
 
 
 class App(ctk.CTk):

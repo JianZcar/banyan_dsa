@@ -1,8 +1,5 @@
 import customtkinter as ctk
 import register_screen
-import user
-import data_save
-import socket
 import pickle
 import settings
 

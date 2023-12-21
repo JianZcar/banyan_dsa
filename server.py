@@ -53,6 +53,7 @@ class ServerGUI(ctk.CTk):
             minute, secs = divmod(self.time_left, 60)
             time_format = f"Time left: {'{:02d}:{:02d}'.format(minute, secs)}"
             self.timer_label.configure(text=time_format)  # Use 'configure' instead of 'config'
+            self.server.send_time()  # Send the time to all connected clients
             self.time_left -= 1
             self.after(1000, self.update_timer)
         elif self.time_left == 0 and self.timer_label.cget('text') != "":
@@ -63,8 +64,9 @@ class ServerGUI(ctk.CTk):
         self.quit()  # Stop the mainloop
         self.destroy()  # Destroy the window
 
+
 class AuctionServer:
-    def __init__(self, gui):
+    def __init__(self, gui=None):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(('0.0.0.0', 12345))  # Bind to 0.0.0.0
         self.server.listen()  # Start listening for connections
@@ -73,6 +75,7 @@ class AuctionServer:
         self.running = True
 
         threading.Thread(target=self.accept_clients).start()
+        threading.Thread(target=self.send_time).start()
 
     def accept_clients(self):
         print("Server is ready to accept clients")  # Add this line
@@ -96,14 +99,13 @@ class AuctionServer:
         while True:
             try:
                 message = client.recv(1024).decode()
-                if not message:
-                    break  # Break the loop if no data is received
-                self.gui.update_listbox(f"Received message: {message}")
+                print(f"Received message: {message}")
 
                 if message == 'get_users':
                     users = self.get_users()  # Get the list of users
                     data = pickle.dumps(users)  # Serialize the list of users
                     client.send(data)  # Send the serialized list of users
+
                 elif message == 'new_user:':
                     data_length = int(client.recv(16).strip())  # Get the length of the data
                     user_data = b""
@@ -119,7 +121,7 @@ class AuctionServer:
                 else:
                     bid = message
                     pub.sendMessage('new_bid', bid=bid)
-            except:
+            except OSError:
                 self.clients.remove(client)
                 client.close()
                 break
@@ -148,9 +150,15 @@ class AuctionServer:
             self.server.close()
         print("Server has stopped")
 
+    def send_time(self):
+        if self.gui is not None:
+            time_left = str(self.gui.time_left)
+            for client in self.clients:
+                client.send(time_left.encode())
+
 
 if __name__ == "__main__":
-    server = AuctionServer(None)
+    server = AuctionServer()
     app = ServerGUI(server)
     server.gui = app
     app.mainloop()

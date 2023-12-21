@@ -2,8 +2,6 @@ import customtkinter as ctk
 import login_screen
 import bidding_selling
 import user
-import data_save
-import socket
 import pickle
 import settings
 
