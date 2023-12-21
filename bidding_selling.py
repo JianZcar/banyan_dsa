@@ -4,6 +4,7 @@ import login_screen
 from pubsub import pub
 import socket
 import threading
+import settings
 
 
 class BiddingSellingScreen(ctk.CTkFrame):
@@ -12,8 +13,7 @@ class BiddingSellingScreen(ctk.CTkFrame):
         pub.subscribe(self.update_bid_lb, 'new_item')
         self.user = user
         self.master = master
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket
-        self.server.connect(('localhost', 12345))
+        self.server = settings.ConnectServer()
         threading.Thread(target=self.listen_for_messages).start()  # Start a new thread to listen for messages
         self.pack()
         self.recently_selected = None

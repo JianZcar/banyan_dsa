@@ -1,9 +1,9 @@
-import customtkinter as ct
+import customtkinter as ctk
 import login_screen
 import bidding_selling
 
 
-class App(ct.CTk):
+class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         width = 780

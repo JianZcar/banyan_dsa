@@ -5,6 +5,7 @@ import user
 import data_save
 import socket
 import pickle
+import settings
 
 
 class RegisterScreen(ctk.CTkFrame):
@@ -18,8 +19,7 @@ class RegisterScreen(ctk.CTkFrame):
         self.frame.pack(padx=10, pady=10)
 
         # Create a socket and connect to the server
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.connect(('localhost', 12345))
+        self.server = settings.ConnectServer()
 
         # Username frame
         self.frame_username = ctk.CTkFrame(self.frame, fg_color="transparent")

@@ -1,15 +1,31 @@
 import socket
 import threading
 from pubsub import pub
+import customtkinter as ctk
+from CTkListbox import *
 import pickle
 
 
+class ServerGUI(ctk.CTk):
+    def __init__(self, server):
+        super().__init__()
+        self.server = server
+        self.title("Server")
+        self.geometry("500x500")
+        self.listbox = CTkListbox(self, width=500, height=500)
+        self.listbox.pack()
+
+    def update_listbox(self, message):
+        self.listbox.insert('end', message)
+
+
 class AuctionServer:
-    def __init__(self):
+    def __init__(self, gui):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(('0.0.0.0', 12345))  # Bind to 0.0.0.0
         self.server.listen()  # Start listening for connections
         self.clients = []  # Define the clients attribute here
+        self.gui = gui
 
         threading.Thread(target=self.accept_clients).start()
 
@@ -18,7 +34,6 @@ class AuctionServer:
         while True:
             try:
                 client, _ = self.server.accept()
-                print("Accepted a new client")  # Add this line
                 self.clients.append(client)
                 threading.Thread(target=self.handle_client, args=(client,)).start()
             except Exception as e:  # Modify this line
@@ -36,7 +51,7 @@ class AuctionServer:
                 message = client.recv(1024).decode()
                 if not message:
                     break  # Break the loop if no data is received
-                print(f"Received message: {message}")
+                self.gui.update_listbox(f"Received message: {message}")
 
                 if message == 'get_users':
                     users = self.get_users()  # Get the list of users
@@ -84,4 +99,6 @@ class AuctionServer:
 
 
 if __name__ == "__main__":
-    server = AuctionServer()
+    app = ServerGUI(None)
+    server = AuctionServer(app)
+    app.mainloop()
