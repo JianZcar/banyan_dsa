@@ -57,6 +57,7 @@ class LoginScreen(ctk.CTkFrame):
         if user_ and user_.password == password:
             self.destroy()
             screen = self.screen(self.master, user_)
+            self.server.send(f"logged_in:{username}".encode())
             screen.pack()
 
         # Here you would add your login logic

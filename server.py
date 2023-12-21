@@ -15,7 +15,7 @@ class ServerGUI(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.time_left = 0
 
-        self.listbox = CTkListbox(self, width=500, height=500)
+        self.listbox = CTkListbox(self, width=500, height=500, command=self.deselect)
         self.listbox.pack()
 
         self.timer_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -36,6 +36,11 @@ class ServerGUI(ctk.CTk):
         # Reset button
         self.reset_button = ctk.CTkButton(self.timer_frame, text="Reset Timer", command=self.reset_timer)
         self.reset_button.grid(row=1, column=2, padx=10, pady=10)
+
+    def deselect(self, selected_option):
+        print(selected_option)
+        i = self.listbox.curselection()
+        self.listbox.deactivate(i)
 
     def update_listbox(self, message):
         self.listbox.insert('end', message)
@@ -99,7 +104,6 @@ class AuctionServer:
         while True:
             try:
                 message = client.recv(1024).decode()
-                print(f"Received message: {message}")
 
                 if message == 'get_users':
                     users = self.get_users()  # Get the list of users
@@ -114,7 +118,13 @@ class AuctionServer:
                         user_data += client.recv(4096 if to_read > 4096 else to_read)
                     user_ = pickle.loads(user_data)  # Unpickle the user data
                     self.save_user(user_)  # Save the user data
+
+                elif message.startswith('logged_in:'):
+                    username = message.split(':', 1)[1]
+                    self.gui.listbox.insert('end', f"{username} has logged in")
+
                 elif message.startswith('new_item:'):
+                    self.gui.listbox.insert('end', message.split(':', 1)[1])
                     item = message.split(':', 1)[1]
                     pub.sendMessage('new_item', item=item)
                     self.broadcast(message, client)  # Pass the sender's client socket to the broadcast method
