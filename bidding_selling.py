@@ -52,16 +52,23 @@ class BiddingSellingScreen(ctk.CTkFrame):
 
         self.selling_lb.insert('end', "Item Name | Price | Seller")
 
+        # Highest bidder listbox
+        self.highest_bidder_label = ctk.CTkLabel(self.frame1, text="Highest bidder")
+        self.highest_bidder_label.grid(row=0, column=2, padx=0, pady=0)
+
+        self.highest_bidder_lb = CTkListbox(self.frame1, command=self.deselect)
+        self.highest_bidder_lb.grid(row=1, column=2, padx=10, pady=10)
+
         # Logout button
         self.logout_button = ctk.CTkButton(self.frame1, text="Logout", command=self.logout)
-        self.logout_button.grid(row=0, column=3, padx=10, pady=10)
+        self.logout_button.grid(row=0, column=4, padx=10, pady=10)
 
         self.username_label = ctk.CTkLabel(self.frame1, text=f"Logged in as: {self.user}")
-        self.username_label.grid(row=2, column=3, padx=10, pady=10)
+        self.username_label.grid(row=2, column=4, padx=10, pady=10)
 
         # Time left label
         self.time_left_label = ctk.CTkLabel(self.frame1, text="")
-        self.time_left_label.grid(row=1, column=3, padx=10, pady=10)
+        self.time_left_label.grid(row=1, column=4, padx=10, pady=10)
 
     def listen_for_messages(self):
         while True:

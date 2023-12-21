@@ -6,7 +6,7 @@ import bidding_selling
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        width = 780
+        width = 1000
         height = 545
 
         self.title("Client")
