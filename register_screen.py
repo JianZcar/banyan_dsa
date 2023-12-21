@@ -3,6 +3,8 @@ import login_screen
 import bidding_selling
 import user
 import data_save
+import socket
+import pickle
 
 
 class RegisterScreen(ctk.CTkFrame):
@@ -14,6 +16,10 @@ class RegisterScreen(ctk.CTkFrame):
 
         self.frame = ctk.CTkFrame(self, fg_color="transparent")
         self.frame.pack(padx=10, pady=10)
+
+        # Create a socket and connect to the server
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.connect(('localhost', 12345))
 
         # Username frame
         self.frame_username = ctk.CTkFrame(self.frame, fg_color="transparent")
@@ -49,21 +55,31 @@ class RegisterScreen(ctk.CTkFrame):
         username = self.username_entry.get()
         password = self.password_entry.get()
         password_1 = self.password_entry_1.get()
-        users = data_save.load_users()
 
         # Here you would add your login logic
         if password != password_1:
             print("Passwords do not match")
-        elif any(user_.username == username for user_ in users):
+        elif any(user_.username == username for user_ in self.get_users()):
             print("Username already taken")
         else:
-            data_save.save_user(user.User(username, password))
+            user_ = user.User(username, password)
+            data = pickle.dumps(user_)  # Serialize the user data
+            data_length = str(len(data)).encode().ljust(16)  # Prepare the length of the data
+            self.server.send('new_user:'.encode())  # Send the 'new_user:' string
+            self.server.send(data_length)  # Send the length of the data
+            self.server.sendall(data)  # Send the serialized user data
             print(f"Username: {username}, Password: {password}")
 
     def login_button(self):
         self.destroy()
         self.login_screen = login_screen.LoginScreen(self.master, bidding_selling.BiddingSellingScreen)
         self.login_screen.pack()
+
+    def get_users(self):
+        self.server.send('get_users'.encode())
+        data = self.server.recv(1024)
+        users = pickle.loads(data)
+        return users
 
 
 class App(ctk.CTk):

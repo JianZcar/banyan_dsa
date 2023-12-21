@@ -2,6 +2,8 @@ import customtkinter as ctk
 import register_screen
 import user
 import data_save
+import socket
+import pickle
 
 
 class LoginScreen(ctk.CTkFrame):
@@ -15,6 +17,10 @@ class LoginScreen(ctk.CTkFrame):
 
         self.frame = ctk.CTkFrame(self, fg_color="transparent")
         self.frame.pack(padx=10, pady=10)
+
+        # Create a socket and connect to the server
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.connect(('localhost', 12345))
 
         # Username frame
         self.frame_username = ctk.CTkFrame(self.frame, fg_color="transparent")
@@ -39,12 +45,19 @@ class LoginScreen(ctk.CTkFrame):
         self.sign_up_button = ctk.CTkButton(self.frame, text="Go to Register", command=self.sign_up)
         self.sign_up_button.pack(padx=10, pady=50)
 
+    def get_users(self):
+        self.server.send('get_users'.encode())
+        data = self.server.recv(1024)
+        users = pickle.loads(data)
+        return users
+
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        user_ = data_save.get_user(username)  # Retrieve the User object from the database
+        users = self.get_users()  # Retrieve the User objects from the server
+        user_ = next((user for user in users if user.username == username), None)
         print(user_)
-        if user_ and user_.username == username and user_.password == password:
+        if user_ and user_.password == password:
             self.destroy()
             screen = self.screen(self.master, user_)
             screen.pack()

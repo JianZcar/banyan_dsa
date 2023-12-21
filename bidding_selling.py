@@ -7,10 +7,10 @@ import threading
 
 
 class BiddingSellingScreen(ctk.CTkFrame):
-    def __init__(self, master=None, username=None):
+    def __init__(self, master=None, user=None):
         super().__init__(master, fg_color="transparent")
         pub.subscribe(self.update_bid_lb, 'new_item')
-        self.username = username
+        self.user = user
         self.master = master
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a socket
         self.server.connect(('localhost', 12345))
@@ -40,7 +40,7 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.bid_lb = CTkListbox(self.frame1, command=self.bid)
         self.bid_lb.grid(row=1, column=0, padx=10, pady=10)
 
-        self.bid_lb.insert('end', "Item for bid: Item 1 | 100 | Seller 1")
+        self.bid_lb.insert('end', "Item Name | Price | Seller")
 
         # Items you are selling listbox
         self.selling_label = ctk.CTkLabel(self.frame1, text="Items you are selling")
@@ -49,11 +49,14 @@ class BiddingSellingScreen(ctk.CTkFrame):
         self.selling_lb = CTkListbox(self.frame1, command=self.deselect)
         self.selling_lb.grid(row=1, column=1, padx=10, pady=10)
 
-        self.selling_lb.insert('end', "Item for bid: Item 1 | 100 | Seller 1")
+        self.selling_lb.insert('end', "Item Name | Price | Seller")
 
         # Logout button
         self.logout_button = ctk.CTkButton(self.frame1, text="Logout", command=self.logout)
         self.logout_button.grid(row=0, column=3, padx=10, pady=10)
+
+        self.username_label = ctk.CTkLabel(self.frame1, text=f"Logged in as: {self.user}")
+        self.username_label.grid(row=2, column=3, padx=10, pady=10)
 
     def listen_for_messages(self):
         while True:
@@ -113,7 +116,7 @@ class BiddingSellingScreen(ctk.CTkFrame):
     def avail_to_bidding(self):
         item_name = self.item_name_entry.get()
         item_price = self.item_price_entry.get()
-        item_string = f"Item for sale: {item_name} | {item_price} | {self.username}"
+        item_string = f"{item_name} | {item_price} | {self.user}"
         self.selling_lb.insert('end', item_string)
         self.server.send(f'new_item:{item_string}'.encode())  # Modify this line
         pub.sendMessage('new_item', message=f'new_item:{item_string}')  # Add this line
@@ -123,9 +126,10 @@ class BiddingSellingScreen(ctk.CTkFrame):
 
     def update_bid_lb(self, message):
         print(f"Updating bid listbox with message: {message}")
+        username_length = len(self.user.username)
         if message.startswith('new_item:'):
             item = message.split(':', 1)[1]
-            if not (f"{self.username}" in item):
+            if not (self.user.username == item[-username_length:]):
                 self.bid_lb.insert('end', item)
 
     def deselect(self, selected_option):
